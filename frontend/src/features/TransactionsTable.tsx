@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowRight, Tag, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, ChevronsLeft, ChevronsRight, Tag, Trash2 } from 'lucide-react';
 import { useDashboardStore } from '@store/dashboardStore';
 import { formatDate } from '@utils/format';
 
@@ -16,6 +16,34 @@ export const TransactionsTable = () => {
 
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(transactions.length / pageSize));
+  }, [transactions.length, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return transactions.slice(start, start + pageSize);
+  }, [transactions, page, pageSize]);
+
+  const startIndex = useMemo(() => {
+    if (transactions.length === 0) {
+      return 0;
+    }
+    return (page - 1) * pageSize + 1;
+  }, [transactions.length, page, pageSize]);
+
+  const endIndex = useMemo(() => {
+    return Math.min(page * pageSize, transactions.length);
+  }, [transactions.length, page, pageSize]);
 
   const handleCategoryChange = async (transactionId: string, value: string) => {
     setError(null);
@@ -64,7 +92,7 @@ export const TransactionsTable = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/30">
-            {transactions.map((transaction) => (
+            {paginatedTransactions.map((transaction) => (
               <tr key={transaction.id} className="transition-colors hover:bg-white/40 dark:hover:bg-white/5">
                 <td className="py-3 pr-4 text-slate-500">{formatDate(transaction.date)}</td>
                 <td className="py-3 pr-4 font-medium text-slate-700 dark:text-slate-100">
@@ -118,8 +146,70 @@ export const TransactionsTable = () => {
           </tbody>
         </table>
       </div>
-      <footer className="mt-4 flex items-center justify-end text-sm text-brand-600">
-        Экспортировать подборку <ArrowRight size={16} className="ml-2" />
+      <footer className="mt-6 flex flex-col gap-4 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <span className="text-xs uppercase tracking-widest text-slate-400">Строк на странице</span>
+          <select
+            value={pageSize}
+            onChange={(event) => {
+              setPageSize(Number.parseInt(event.target.value, 10));
+              setPage(1);
+            }}
+            className="w-24 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-sm text-slate-600 shadow focus:outline-none dark:bg-white/10 dark:text-slate-200"
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+          <span>
+            Показаны {transactions.length === 0 ? 0 : `${startIndex}–${endIndex}`} из {transactions.length}
+          </span>
+        </div>
+        <div className="flex flex-col items-start gap-3 text-slate-600 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold shadow transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-slate-200"
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+            >
+              <ChevronsLeft size={14} />
+              В начало
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold shadow transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-slate-200"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1}
+            >
+              Назад
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold shadow transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-slate-200"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page === totalPages}
+            >
+              Вперёд
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold shadow transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-slate-200"
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages}
+            >
+              В конец
+              <ChevronsRight size={14} />
+            </button>
+          </div>
+          <span className="text-xs uppercase tracking-widest text-slate-400">Страница {page} из {totalPages}</span>
+        </div>
+        <button className="inline-flex items-center justify-center rounded-full bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-500/20" type="button">
+          Экспортировать подборку
+          <ArrowRight size={16} className="ml-2" />
+        </button>
       </footer>
     </section>
   );
