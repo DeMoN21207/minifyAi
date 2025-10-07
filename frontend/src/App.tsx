@@ -5,6 +5,7 @@ import { AdminConsolePage } from '@pages/AdminConsolePage';
 import { UserDashboardPage } from '@pages/UserDashboardPage';
 import { LoginPage } from '@pages/LoginPage';
 import { ProtectedRoute } from '@components/routing/ProtectedRoute';
+import { NotFoundPage } from '@pages/NotFoundPage';
 import { useAuthStore, selectIsAuthenticated } from '@store/authStore';
 
 const App = () => {
@@ -39,7 +40,7 @@ const App = () => {
           }
         />
       </Route>
-      <Route path="*" element={<Navigate to={defaultPath} replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };

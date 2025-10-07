@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@components/layout/Sidebar';
 import { TopBar } from '@components/layout/TopBar';
+import { BudgetAssistant } from '@features/BudgetAssistant';
 
 export const AppLayout = () => {
   return (
@@ -12,6 +13,7 @@ export const AppLayout = () => {
           <Outlet />
         </main>
       </div>
+      <BudgetAssistant />
     </div>
   );
 };

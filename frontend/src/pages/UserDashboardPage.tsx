@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { ActionBar } from '@components/layout/ActionBar';
-import { BudgetAssistant } from '@features/BudgetAssistant';
 import { CashflowChart } from '@features/CashflowChart';
 import { CategoryBreakdown } from '@features/CategoryBreakdown';
 import { DailyCalendar } from '@features/DailyCalendar';
@@ -10,6 +9,7 @@ import { SubscriptionsPanel } from '@features/SubscriptionsPanel';
 import { SubscriptionForecast } from '@features/SubscriptionForecast';
 import { TransactionsTable } from '@features/TransactionsTable';
 import { TransactionComposer } from '@features/TransactionComposer';
+import { UserProfileSection } from '@features/UserProfileSection';
 import { useDashboardStore } from '@store/dashboardStore';
 
 export const UserDashboardPage = () => {
@@ -23,6 +23,7 @@ export const UserDashboardPage = () => {
 
   return (
     <div className="space-y-6">
+      <UserProfileSection />
       <ActionBar />
       <OverviewCards />
       <TransactionComposer />
@@ -36,9 +37,8 @@ export const UserDashboardPage = () => {
         <SubscriptionForecast />
         <MultiCurrencyRates />
       </section>
-      <section id="transactions" className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+      <section id="transactions" className="grid gap-6">
         <TransactionsTable />
-        <BudgetAssistant />
       </section>
     </div>
   );
