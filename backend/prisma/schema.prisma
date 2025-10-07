@@ -42,6 +42,7 @@ model User {
   fullName      String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  categories    Category[]
   transactions  Transaction[]
   subscriptions Subscription[]
   chatSessions  ChatSession[]

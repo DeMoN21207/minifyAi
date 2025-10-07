@@ -18,8 +18,13 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173,
-    host: '0.0.0.0'
+    port: 3001,
+    host: 'localhost',
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 3001
+    }
   },
   define: {
     __APP_VERSION__: JSON.stringify('0.1.0')

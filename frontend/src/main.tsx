@@ -6,7 +6,6 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import './styles/global.css';
-import { registerServiceWorker } from './serviceWorkerRegistration';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,8 +16,6 @@ const queryClient = new QueryClient({
     }
   }
 });
-
-registerServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

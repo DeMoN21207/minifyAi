@@ -75,9 +75,6 @@ export const Sidebar = () => {
       <div className="rounded-2xl bg-gradient-to-br from-brand-500 to-brand-400 p-5 text-white">
         <p className="text-xs uppercase tracking-widest text-white/70">Версия</p>
         <p className="mt-1 text-2xl font-semibold">{__APP_VERSION__}</p>
-        <p className="mt-4 text-sm text-white/80">
-          PWA-режим включён. Синхронизация работает офлайн.
-        </p>
       </div>
     </aside>
   );

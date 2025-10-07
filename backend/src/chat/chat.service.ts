@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChatTool } from '@prisma/client';
+import { ChatTool, Prisma } from '@prisma/client';
 import { PrismaService } from '../common/prisma.service';
 import { CreateChatMessageDto } from './dto/create-chat-message.dto';
 
@@ -29,7 +29,7 @@ export class ChatService {
         role: payload.role,
         content: payload.content,
         tool: payload.tool ?? ChatTool.none,
-        toolPayload: payload.toolPayload ?? null
+        toolPayload: payload.toolPayload as Prisma.InputJsonValue | undefined
       }
     });
     return message;
