@@ -11,7 +11,8 @@
     "lint": "eslint ./src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.5",
@@ -25,6 +26,9 @@
     "class-validator": "^0.14.0",
     "date-fns": "^3.6.0",
     "rxjs": "^7.8.1"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.2",

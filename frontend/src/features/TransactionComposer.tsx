@@ -35,6 +35,8 @@ export const TransactionComposer = () => {
   const [tags, setTags] = useState('');
   const [note, setNote] = useState('');
   const [lastCreatedId, setLastCreatedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const relatedPresets = useMemo(
     () => presets.filter((preset) => preset.type === type && preset.categoryId === categoryId),
@@ -58,45 +60,62 @@ export const TransactionComposer = () => {
     return money;
   }, [amount, currency, convertToSelectedCurrency, selectedCurrency]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!amount || !categoryId || !description) return;
     const numeric = Number(amount);
     if (Number.isNaN(numeric)) return;
-
-    const created = createTransaction({
-      type,
-      categoryId,
-      merchant: merchant.trim() || undefined,
-      tags: tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      date: dayjs(date).toISOString(),
-      description: description.trim(),
-      amount: { currency, amount: numeric },
-      note: note.trim() || undefined
-    });
-    setLastCreatedId(created.id);
-    setDescription('');
-    setMerchant('');
-    setAmount('');
-    setTags('');
-    setNote('');
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const created = await createTransaction({
+        type,
+        categoryId,
+        merchant: merchant.trim() || undefined,
+        tags: tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        date: dayjs(date).toISOString(),
+        description: description.trim(),
+        amount: { currency, amount: numeric },
+        note: note.trim() || undefined
+      });
+      setLastCreatedId(created.id);
+      setDescription('');
+      setMerchant('');
+      setAmount('');
+      setTags('');
+      setNote('');
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Не удалось сохранить операцию';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePreset = (presetId: string) => {
-    const transaction = applyPreset(presetId);
-    if (!transaction) return;
-    setType(transaction.type);
-    setCategoryId(transaction.categoryId);
-    setDescription(transaction.description);
-    setMerchant(transaction.merchant ?? '');
-    setAmount(String(transaction.amount.amount));
-    setCurrency(transaction.amount.currency);
-    setTags(defaultTags(transaction.tags));
-    setNote(transaction.note ?? '');
-    setDate(dayjs(transaction.date).format('YYYY-MM-DD'));
-    setLastCreatedId(transaction.id);
+  const handlePreset = async (presetId: string) => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const transaction = await applyPreset(presetId);
+      if (!transaction) return;
+      setType(transaction.type);
+      setCategoryId(transaction.categoryId);
+      setDescription(transaction.description);
+      setMerchant(transaction.merchant ?? '');
+      setAmount(String(transaction.amount.amount));
+      setCurrency(transaction.amount.currency);
+      setTags(defaultTags(transaction.tags));
+      setNote(transaction.note ?? '');
+      setDate(dayjs(transaction.date).format('YYYY-MM-DD'));
+      setLastCreatedId(transaction.id);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Не удалось применить пресет';
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -112,6 +131,7 @@ export const TransactionComposer = () => {
           </span>
         )}
       </header>
+      {error && <div className="rounded-2xl bg-red-100 px-4 py-3 text-sm text-red-600">{error}</div>}
       <div className="flex flex-wrap gap-2 text-sm">
         {(['expense', 'income', 'transfer'] as const).map((option) => (
           <button
@@ -198,6 +218,8 @@ export const TransactionComposer = () => {
               <option value="RUB">₽</option>
               <option value="USD">$</option>
               <option value="EUR">€</option>
+              <option value="GBP">£</option>
+              <option value="CNY">¥</option>
             </select>
           </label>
         </div>
@@ -233,9 +255,9 @@ export const TransactionComposer = () => {
           type="button"
           onClick={handleSubmit}
           className="flex items-center gap-2 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:opacity-40"
-          disabled={!amount || !description || !categoryId}
+          disabled={!amount || !description || !categoryId || isSubmitting}
         >
-          <Sparkles size={16} /> Сохранить
+          <Sparkles size={16} /> {isSubmitting ? 'Сохраняем...' : 'Сохранить'}
         </button>
         <span className="text-xs uppercase tracking-widest text-slate-400">быстрые пресеты</span>
         <div className="flex flex-wrap gap-2">
@@ -249,7 +271,8 @@ export const TransactionComposer = () => {
               key={preset.id}
               type="button"
               onClick={() => handlePreset(preset.id)}
-              className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600 shadow hover:bg-white"
+              className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600 shadow hover:bg-white disabled:opacity-60"
+              disabled={isSubmitting}
             >
               <Wand2 size={14} /> {preset.label}
             </button>

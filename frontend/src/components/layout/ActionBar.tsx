@@ -35,6 +35,8 @@ export const ActionBar = () => {
           <option value="RUB">₽ Рубли</option>
           <option value="USD">$ Доллары</option>
           <option value="EUR">€ Евро</option>
+          <option value="GBP">£ Фунты</option>
+          <option value="CNY">¥ Юань</option>
         </select>
       </div>
       <div className="flex flex-wrap items-center gap-3">
