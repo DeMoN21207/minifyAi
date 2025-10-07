@@ -165,3 +165,35 @@ export interface AdminState {
   auditLog: AuditLogEntry[];
   planInsights: PlanInsight[];
 }
+
+export type ManagedUserStatus = 'active' | 'pending' | 'suspended';
+
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  isSystem?: boolean;
+  isDefault?: boolean;
+}
+
+export interface ManagedUser {
+  id: string;
+  fullName: string;
+  email: string;
+  username: string;
+  roleId: string;
+  status: ManagedUserStatus;
+  phone?: string;
+  department?: string;
+  lastLoginAt: string | null;
+  createdAt: string;
+  passwordUpdatedAt: string;
+  requirePasswordReset: boolean;
+  temporaryPassword?: string;
+}
+
+export interface SettingsState {
+  roles: RoleDefinition[];
+  users: ManagedUser[];
+}
