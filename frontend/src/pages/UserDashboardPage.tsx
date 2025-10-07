@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { ActionBar } from '@components/layout/ActionBar';
 import { BudgetAssistant } from '@features/BudgetAssistant';
 import { CashflowChart } from '@features/CashflowChart';
@@ -9,8 +10,17 @@ import { SubscriptionsPanel } from '@features/SubscriptionsPanel';
 import { SubscriptionForecast } from '@features/SubscriptionForecast';
 import { TransactionsTable } from '@features/TransactionsTable';
 import { TransactionComposer } from '@features/TransactionComposer';
+import { useDashboardStore } from '@store/dashboardStore';
 
 export const UserDashboardPage = () => {
+  const fetchTransactions = useDashboardStore((state) => state.fetchTransactions);
+
+  useEffect(() => {
+    fetchTransactions().catch((error) => {
+      console.error('Не удалось загрузить операции', error);
+    });
+  }, [fetchTransactions]);
+
   return (
     <div className="space-y-6">
       <ActionBar />

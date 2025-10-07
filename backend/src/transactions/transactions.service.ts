@@ -34,7 +34,8 @@ export class TransactionsService {
         notes: data.notes,
         exchangeRate: data.exchangeRate ?? null,
         userId: data.userId
-      }
+      },
+      include: { category: true, merchant: true }
     });
   }
 
@@ -45,7 +46,8 @@ export class TransactionsService {
         ...data,
         date: data.date ? new Date(data.date) : undefined,
         tags: data.tags ?? undefined
-      }
+      },
+      include: { category: true, merchant: true }
     });
   }
 
