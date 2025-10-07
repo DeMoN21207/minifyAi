@@ -25,10 +25,10 @@ export const ProductAnalyticsPage = () => {
   return (
     <div className="space-y-6">
       <section className="glass-panel space-y-4 p-6">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Аналитика и отчётность</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Отчётность и витрины данных</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Получайте наглядную картину финансового состояния бизнеса — от ежедневных транзакций до долгосрочных трендов.
-          Используйте готовые шаблоны или создавайте свои панели аналитики.
+          Используйте готовые шаблоны или создавайте собственные панели аналитики для разных стейкхолдеров.
         </p>
       </section>
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
