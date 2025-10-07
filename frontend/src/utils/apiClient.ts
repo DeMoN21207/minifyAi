@@ -1,9 +1,4 @@
-const DEFAULT_API_BASE_URL =
-  typeof window !== 'undefined' && window.location.origin
-    ? window.location.origin
-    : 'http://localhost:3000';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? DEFAULT_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 interface ApiClientOptions {
   authenticated?: boolean;

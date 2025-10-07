@@ -19,7 +19,17 @@ export class TransactionsService {
     });
   }
 
-  create(data: CreateTransactionDto) {
+  async create(data: CreateTransactionDto) {
+    console.log('Creating transaction with data:', JSON.stringify(data, null, 2));
+
+    // Verify userId exists
+    if (data.userId) {
+      const userExists = await this.prisma.user.findUnique({ where: { id: data.userId } });
+      if (!userExists) {
+        throw new Error(`User with id ${data.userId} does not exist`);
+      }
+    }
+
     return this.prisma.transaction.create({
       data: {
         amount: data.amount,
@@ -27,9 +37,9 @@ export class TransactionsService {
         date: new Date(data.date),
         type: data.type as TransactionType,
         description: data.description,
-        categoryId: data.categoryId,
-        merchantId: data.merchantId,
-        accountId: data.accountId,
+        categoryId: data.categoryId || undefined,
+        merchantId: data.merchantId || undefined,
+        accountId: data.accountId || undefined,
         tags: data.tags ?? [],
         notes: data.notes,
         exchangeRate: data.exchangeRate ?? null,

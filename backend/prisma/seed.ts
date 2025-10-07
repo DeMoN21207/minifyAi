@@ -38,8 +38,37 @@ async function seedUsers() {
   }
 }
 
+async function seedCategories() {
+  const adminUser = await prisma.user.findUnique({ where: { email: 'admin@minify.ai' } });
+  if (!adminUser) return;
+
+  const categories = [
+    { id: 'cat-expense-food', name: 'Еда и напитки' },
+    { id: 'cat-expense-transport', name: 'Транспорт' },
+    { id: 'cat-expense-entertainment', name: 'Развлечения' },
+    { id: 'cat-expense-shopping', name: 'Покупки' },
+    { id: 'cat-expense-health', name: 'Здоровье' },
+    { id: 'cat-income-salary', name: 'Зарплата' },
+    { id: 'cat-income-freelance', name: 'Фриланс' },
+    { id: 'cat-income-other', name: 'Прочие доходы' }
+  ];
+
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: { id: category.id },
+      update: { name: category.name },
+      create: {
+        id: category.id,
+        name: category.name,
+        userId: adminUser.id
+      }
+    });
+  }
+}
+
 async function main() {
   await seedUsers();
+  await seedCategories();
   console.log('Seed data applied successfully');
 }
 
