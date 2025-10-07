@@ -6,6 +6,10 @@ import { UserDashboardPage } from '@pages/UserDashboardPage';
 import { LoginPage } from '@pages/LoginPage';
 import { ProtectedRoute } from '@components/routing/ProtectedRoute';
 import { NotFoundPage } from '@pages/NotFoundPage';
+import { ProductOperationsPage } from '@pages/product/ProductOperationsPage';
+import { ProductSubscriptionsPage } from '@pages/product/ProductSubscriptionsPage';
+import { ProductAnalyticsPage } from '@pages/product/ProductAnalyticsPage';
+import { ProductSettingsPage } from '@pages/product/ProductSettingsPage';
 import { useAuthStore, selectIsAuthenticated } from '@store/authStore';
 
 const App = () => {
@@ -31,6 +35,17 @@ const App = () => {
         }
       >
         <Route path="/user" element={<UserDashboardPage />} />
+        <Route path="/product/operations" element={<ProductOperationsPage />} />
+        <Route path="/product/subscriptions" element={<ProductSubscriptionsPage />} />
+        <Route path="/product/analytics" element={<ProductAnalyticsPage />} />
+        <Route
+          path="/product/settings"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ProductSettingsPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/admin"
           element={

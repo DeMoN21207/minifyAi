@@ -14,6 +14,22 @@ const routeMeta: Record<
     title: 'Личный кабинет',
     subtitle: 'Контролируйте личные финансы, подписки и аналитику.'
   },
+  '/product/operations': {
+    title: 'Операции',
+    subtitle: 'Управляйте платежами и контролируйте денежные потоки компании.'
+  },
+  '/product/subscriptions': {
+    title: 'Подписки',
+    subtitle: 'Отслеживайте SaaS-расходы и продления сервисов.'
+  },
+  '/product/analytics': {
+    title: 'Аналитика',
+    subtitle: 'Получайте визуальные отчёты и следите за ключевыми метриками.'
+  },
+  '/product/settings': {
+    title: 'Настройки',
+    subtitle: 'Управляйте безопасностью, ролями и интеграциями платформы.'
+  },
   '/admin': {
     title: 'Админ-панель',
     subtitle: 'Настраивайте команды, следите за метриками и безопасностью.'
@@ -119,7 +135,7 @@ export const TopBar = () => {
           {isMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 z-10 mt-2 w-56 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-black/5"
+              className="absolute right-0 z-50 mt-2 w-56 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-black/5"
             >
               <button
                 type="button"
