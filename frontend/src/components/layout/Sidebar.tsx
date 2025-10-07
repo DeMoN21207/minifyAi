@@ -1,4 +1,4 @@
-import { LayoutDashboard, Layers, PieChart, Settings, ShieldCheck, Wallet } from 'lucide-react';
+import { LayoutDashboard, Layers, PieChart, Settings, Wallet } from 'lucide-react';
 import clsx from 'classnames';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@store/authStore';
@@ -11,16 +11,12 @@ interface NavItem {
   roles: UserRole[];
 }
 
-const workspaceNav: NavItem[] = [
-  { icon: LayoutDashboard, label: 'Личный кабинет', to: '/user', roles: ['user', 'admin'] },
-  { icon: ShieldCheck, label: 'Админ-панель', to: '/admin', roles: ['admin'] }
-];
-
 const productNav: NavItem[] = [
-  { icon: Wallet, label: 'Операции', to: '/user#transactions', roles: ['user', 'admin'] },
-  { icon: Layers, label: 'Подписки', to: '/user#subscriptions', roles: ['user', 'admin'] },
-  { icon: PieChart, label: 'Аналитика', to: '/user#analytics', roles: ['user', 'admin'] },
-  { icon: Settings, label: 'Настройки', to: '/admin#settings', roles: ['admin'] }
+  { icon: LayoutDashboard, label: 'Обзор', to: '/user', roles: ['user', 'admin'] },
+  { icon: Wallet, label: 'Операции', to: '/product/operations', roles: ['user', 'admin'] },
+  { icon: Layers, label: 'Подписки', to: '/product/subscriptions', roles: ['user', 'admin'] },
+  { icon: PieChart, label: 'Аналитика', to: '/product/analytics', roles: ['user', 'admin'] },
+  { icon: Settings, label: 'Настройки', to: '/product/settings', roles: ['admin'] }
 ];
 
 export const Sidebar = () => {
@@ -59,30 +55,7 @@ export const Sidebar = () => {
             <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Finance OS</h1>
           </div>
         </Link>
-        <div className="mt-10 space-y-6">
-          <nav className="flex flex-col gap-2">
-            <p className="px-4 text-xs uppercase tracking-widest text-slate-400">Рабочие области</p>
-            {filterByRole(workspaceNav).map(({ icon: Icon, label, to }) => {
-              const active = isNavItemActive(to);
-              return (
-                <Link
-                  key={to}
-                  to={to}
-                  className={clsx(
-                    'flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition-all',
-                    active
-                      ? 'bg-brand-500/10 text-brand-700 dark:text-brand-200'
-                      : 'text-slate-500 hover:bg-slate-100/60 dark:hover:bg-white/5'
-                  )}
-                >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600">
-                    <Icon size={18} />
-                  </span>
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+        <div className="mt-10">
           <nav className="flex flex-col gap-2">
             <p className="px-4 text-xs uppercase tracking-widest text-slate-400">Продукт</p>
             {filterByRole(productNav).map(({ icon: Icon, label, to }) => {

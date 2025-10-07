@@ -79,22 +79,22 @@ export const BudgetAssistant = () => {
             onSubmit={handleSubmit}
             className="border-t border-white/40 bg-white/70 px-5 py-4 dark:border-white/10 dark:bg-slate-900/60"
           >
-            <div className="flex items-center gap-3 rounded-3xl bg-white/90 px-4 py-3 shadow-inner dark:bg-white/10">
+            <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-white/90 px-4 py-3 shadow-inner dark:bg-white/10 md:flex-nowrap">
               <input
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder="Спроси у ИИ: куда можно сократить расходы?"
-                className="flex-1 border-none bg-transparent text-sm focus:outline-none"
+                className="min-w-0 basis-full flex-1 border-none bg-transparent text-sm focus:outline-none sm:basis-auto"
               />
               <button
                 type="button"
-                className="hidden items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow md:inline-flex"
+                className="hidden h-10 items-center gap-2 rounded-full bg-white px-3 text-xs font-semibold text-slate-600 shadow md:inline-flex"
               >
                 <Upload size={14} /> История
               </button>
               <button
                 type="submit"
-                className="rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-lg transition enabled:hover:bg-brand-600 disabled:opacity-40"
+                className="inline-flex h-10 w-full items-center justify-center rounded-full bg-brand-500 px-5 text-sm font-semibold text-white shadow-lg transition enabled:hover:bg-brand-600 disabled:opacity-40 sm:w-auto"
                 disabled={!prompt.trim()}
               >
                 Отправить
