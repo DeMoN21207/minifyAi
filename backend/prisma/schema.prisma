@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Currency {
+  USD
+  EUR
+  GBP
+  RUB
+  CNY
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+}
+
+enum ChatMessageRole {
+  user
+  assistant
+  system
+}
+
+enum ChatTool {
+  none
+  aggregate
+  recategorize
+  list_subscriptions
+  forecast_subscriptions
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  fullName      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  transactions  Transaction[]
+  subscriptions Subscription[]
+  chatSessions  ChatSession[]
+}
+
+model Category {
+  id            String         @id @default(uuid())
+  name          String
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String
+  transactions  Transaction[]
+  subscriptions Subscription[]
+}
+
+model Merchant {
+  id            String         @id @default(uuid())
+  name          String
+  transactions  Transaction[]
+  subscriptions Subscription[]
+}
+
+model Account {
+  id            String         @id @default(uuid())
+  name          String
+  currency      Currency
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id           String          @id @default(uuid())
+  amount       Decimal
+  currency     Currency
+  date         DateTime
+  type         TransactionType
+  description  String?
+  tags         String[]        @default([])
+  notes        String?
+  exchangeRate Decimal?
+  category     Category?       @relation(fields: [categoryId], references: [id])
+  categoryId   String?
+  merchant     Merchant?       @relation(fields: [merchantId], references: [id])
+  merchantId   String?
+  account      Account?        @relation(fields: [accountId], references: [id])
+  accountId    String?
+  user         User            @relation(fields: [userId], references: [id])
+  userId       String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Subscription {
+  id             String    @id @default(uuid())
+  name           String
+  amount         Decimal
+  currency       Currency
+  intervalMonths Int
+  nextRunAt      DateTime
+  notes          String?
+  autoRenew      Boolean   @default(true)
+  category       Category? @relation(fields: [categoryId], references: [id])
+  categoryId     String?
+  merchant       Merchant? @relation(fields: [merchantId], references: [id])
+  merchantId     String?
+  user           User      @relation(fields: [userId], references: [id])
+  userId         String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+}
+
+model ChatMessage {
+  id          String           @id @default(uuid())
+  session     ChatSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String
+  role        ChatMessageRole
+  content     String
+  tool        ChatTool         @default(none)
+  toolPayload Json?
+  createdAt   DateTime         @default(now())
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  date      DateTime
+  base      Currency
+  quote     Currency
+  rate      Decimal
+  createdAt DateTime @default(now())
+
+  @@unique([date, base, quote])
+}
