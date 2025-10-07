@@ -1,20 +1,33 @@
 import { LayoutDashboard, Layers, PieChart, Settings, ShieldCheck, Wallet } from 'lucide-react';
 import clsx from 'classnames';
 import { NavLink } from 'react-router-dom';
+import { useAuthStore } from '@store/authStore';
+import type { UserRole } from '@types/index';
 
-const workspaceNav = [
-  { icon: LayoutDashboard, label: 'Личный кабинет', to: '/user' },
-  { icon: ShieldCheck, label: 'Админ-панель', to: '/admin' }
+interface NavItem {
+  icon: typeof LayoutDashboard;
+  label: string;
+  to: string;
+  roles: UserRole[];
+}
+
+const workspaceNav: NavItem[] = [
+  { icon: LayoutDashboard, label: 'Личный кабинет', to: '/user', roles: ['user', 'admin'] },
+  { icon: ShieldCheck, label: 'Админ-панель', to: '/admin', roles: ['admin'] }
 ];
 
-const productNav = [
-  { icon: Wallet, label: 'Операции', to: '/user#transactions' },
-  { icon: Layers, label: 'Подписки', to: '/user#subscriptions' },
-  { icon: PieChart, label: 'Аналитика', to: '/user#analytics' },
-  { icon: Settings, label: 'Настройки', to: '/admin#settings' }
+const productNav: NavItem[] = [
+  { icon: Wallet, label: 'Операции', to: '/user#transactions', roles: ['user', 'admin'] },
+  { icon: Layers, label: 'Подписки', to: '/user#subscriptions', roles: ['user', 'admin'] },
+  { icon: PieChart, label: 'Аналитика', to: '/user#analytics', roles: ['user', 'admin'] },
+  { icon: Settings, label: 'Настройки', to: '/admin#settings', roles: ['admin'] }
 ];
 
 export const Sidebar = () => {
+  const role = useAuthStore((state) => state.user?.role ?? 'user');
+
+  const filterByRole = (items: NavItem[]) => items.filter((item) => item.roles.includes(role));
+
   return (
     <aside className="glass-panel hidden lg:flex w-72 flex-col justify-between p-8">
       <div>
@@ -28,7 +41,7 @@ export const Sidebar = () => {
         <div className="mt-10 space-y-6">
           <nav className="flex flex-col gap-2">
             <p className="px-4 text-xs uppercase tracking-widest text-slate-400">Рабочие области</p>
-            {workspaceNav.map(({ icon: Icon, label, to }) => (
+            {filterByRole(workspaceNav).map(({ icon: Icon, label, to }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -50,7 +63,7 @@ export const Sidebar = () => {
           </nav>
           <nav className="flex flex-col gap-2">
             <p className="px-4 text-xs uppercase tracking-widest text-slate-400">Продукт</p>
-            {productNav.map(({ icon: Icon, label, to }) => (
+            {filterByRole(productNav).map(({ icon: Icon, label, to }) => (
               <NavLink
                 key={to}
                 to={to}

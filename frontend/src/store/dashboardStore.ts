@@ -16,16 +16,19 @@ import {
   mockSubscriptions,
   mockTransactions
 } from '@mocks/dashboard';
+import { apiClient } from '@utils/apiClient';
+import { useAuthStore } from '@store/authStore';
 
 type TransactionDraft = Omit<Transaction, 'id' | 'category'> & { category?: string };
 
 interface DashboardActions {
   setCurrency: (currency: CurrencyCode) => void;
   setMonth: (month: string) => void;
-  createTransaction: (transaction: TransactionDraft) => Transaction;
-  updateTransaction: (id: string, updates: Partial<TransactionDraft>) => void;
-  deleteTransaction: (id: string) => void;
-  applyPreset: (presetId: string) => Transaction | undefined;
+  fetchTransactions: () => Promise<void>;
+  createTransaction: (transaction: TransactionDraft) => Promise<Transaction>;
+  updateTransaction: (id: string, updates: Partial<TransactionDraft>) => Promise<Transaction | null>;
+  deleteTransaction: (id: string) => Promise<void>;
+  applyPreset: (presetId: string) => Promise<Transaction | undefined>;
   upsertSubscription: (subscription: Subscription) => void;
   toggleSubscriptionStatus: (subscriptionId: string) => void;
   deleteSubscription: (subscriptionId: string) => void;
@@ -33,6 +36,21 @@ interface DashboardActions {
   getSubscriptionForecast: (monthsAhead: number) => SubscriptionForecastItem[];
   convertToSelectedCurrency: (amount: MoneyAmount) => MoneyAmount;
 }
+
+type ApiTransaction = {
+  id: string;
+  amount: string | number;
+  currency: CurrencyCode;
+  date: string;
+  type: 'EXPENSE' | 'INCOME' | 'TRANSFER';
+  description?: string | null;
+  categoryId?: string | null;
+  merchantId?: string | null;
+  notes?: string | null;
+  tags?: string[] | null;
+  merchant?: { id: string; name: string } | null;
+  category?: { id: string; name: string } | null;
+};
 
 const getLatestRate = (
   exchangeRates: DashboardState['exchangeRates'],
@@ -83,6 +101,67 @@ const shiftByCadence = (date: dayjs.Dayjs, cadence: Subscription['cadence']) => 
     default:
       return date;
   }
+};
+
+const mapTypeFromApi = (type: ApiTransaction['type']): Transaction['type'] => {
+  switch (type) {
+    case 'INCOME':
+      return 'income';
+    case 'TRANSFER':
+      return 'transfer';
+    case 'EXPENSE':
+    default:
+      return 'expense';
+  }
+};
+
+const mapTypeToApi = (type: Transaction['type']): ApiTransaction['type'] => {
+  switch (type) {
+    case 'income':
+      return 'INCOME';
+    case 'transfer':
+      return 'TRANSFER';
+    case 'expense':
+    default:
+      return 'EXPENSE';
+  }
+};
+
+const mapApiTransaction = (
+  apiTransaction: ApiTransaction,
+  categories: DashboardState['categories']
+): Transaction => {
+  const categoryName =
+    apiTransaction.category?.name ??
+    categories.find((category) => category.id === apiTransaction.categoryId)?.name ??
+    'Не задано';
+
+  return {
+    id: apiTransaction.id,
+    type: mapTypeFromApi(apiTransaction.type),
+    categoryId: apiTransaction.categoryId ?? '',
+    category: categoryName,
+    merchant: apiTransaction.merchant?.name ?? undefined,
+    tags: apiTransaction.tags ?? undefined,
+    date: apiTransaction.date,
+    description: apiTransaction.description ?? '',
+    amount: {
+      currency: apiTransaction.currency,
+      amount:
+        typeof apiTransaction.amount === 'string'
+          ? Number.parseFloat(apiTransaction.amount)
+          : apiTransaction.amount
+    },
+    note: apiTransaction.notes ?? undefined
+  };
+};
+
+const resolveAuthContext = () => {
+  const { accessToken, logout, user } = useAuthStore.getState();
+  if (!user) {
+    throw new Error('Не авторизован');
+  }
+  return { accessToken, logout, user };
 };
 
 const recalculateAnalytics = (
@@ -194,6 +273,27 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
         state.categories
       )
     })),
+  fetchTransactions: async () => {
+    const { accessToken, logout, user } = resolveAuthContext();
+    const query = new URLSearchParams({ userId: user.id }).toString();
+    const response = await apiClient<ApiTransaction[]>(`/transactions?${query}`, undefined, {
+      token: accessToken,
+      onUnauthorized: logout
+    });
+    const categories = get().categories;
+    const transactions = response.map((item) => mapApiTransaction(item, categories));
+    set((state) => ({
+      transactions,
+      ...recalculateAnalytics(
+        transactions,
+        state.subscriptions,
+        state.selectedMonth,
+        state.selectedCurrency,
+        state.exchangeRates,
+        state.categories
+      )
+    }));
+  },
   setMonth: (month) =>
     set((state) => ({
       selectedMonth: month,
@@ -206,21 +306,35 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
         state.categories
       )
     })),
-  createTransaction: (transactionDraft) => {
-    const categories = get().categories;
-    const categoryName =
-      transactionDraft.category ??
-      categories.find((category) => category.id === transactionDraft.categoryId)?.name ??
-      'Не задано';
+  createTransaction: async (transactionDraft) => {
+    const { accessToken, logout, user } = resolveAuthContext();
     const normalizedDate = dayjs(transactionDraft.date).isValid()
       ? dayjs(transactionDraft.date).toISOString()
       : transactionDraft.date;
-    const transaction: Transaction = {
-      ...transactionDraft,
-      id: `trx-${Date.now()}`,
+    const payload = {
+      type: mapTypeToApi(transactionDraft.type),
+      amount: transactionDraft.amount.amount,
+      currency: transactionDraft.amount.currency,
       date: normalizedDate,
-      category: categoryName
+      userId: user.id,
+      description: transactionDraft.description,
+      categoryId: transactionDraft.categoryId || undefined,
+      merchantId: undefined,
+      accountId: undefined,
+      tags: transactionDraft.tags ?? [],
+      notes: transactionDraft.note,
+      exchangeRate: undefined
     };
+
+    const response = await apiClient<ApiTransaction>('/transactions', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }, {
+      token: accessToken,
+      onUnauthorized: logout
+    });
+
+    const transaction = mapApiTransaction(response, get().categories);
 
     set((state) => {
       const transactions = [transaction, ...state.transactions];
@@ -239,23 +353,55 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
 
     return transaction;
   },
-  updateTransaction: (id, updates) =>
+  updateTransaction: async (id, updates) => {
+    const { accessToken, logout } = resolveAuthContext();
+    const payload: Record<string, unknown> = {};
+
+    if (updates.type) {
+      payload.type = mapTypeToApi(updates.type);
+    }
+    if (typeof updates.description !== 'undefined') {
+      payload.description = updates.description;
+    }
+    if (typeof updates.categoryId !== 'undefined') {
+      payload.categoryId = updates.categoryId;
+    }
+    if (typeof updates.date !== 'undefined') {
+      payload.date = dayjs(updates.date).isValid()
+        ? dayjs(updates.date).toISOString()
+        : updates.date;
+    }
+    if (typeof updates.amount !== 'undefined') {
+      payload.amount = updates.amount.amount;
+      payload.currency = updates.amount.currency;
+    }
+    if (typeof updates.tags !== 'undefined') {
+      payload.tags = updates.tags;
+    }
+    if (typeof updates.note !== 'undefined') {
+      payload.notes = updates.note;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return null;
+    }
+
+    const response = await apiClient<ApiTransaction>(
+      `/transactions/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      },
+      {
+        token: accessToken,
+        onUnauthorized: logout
+      }
+    );
+
+    const transaction = mapApiTransaction(response, get().categories);
+
     set((state) => {
-      const transactions = state.transactions.map((transaction) => {
-        if (transaction.id !== id) return transaction;
-        const normalizedDate =
-          updates.date && dayjs(updates.date).isValid() ? dayjs(updates.date).toISOString() : updates.date;
-        const categoryName =
-          updates.category ??
-          state.categories.find((category) => category.id === (updates.categoryId ?? transaction.categoryId))
-            ?.name ?? transaction.category;
-        return {
-          ...transaction,
-          ...updates,
-          ...(normalizedDate ? { date: normalizedDate } : {}),
-          category: categoryName
-        };
-      });
+      const transactions = state.transactions.map((item) => (item.id === id ? transaction : item));
       return {
         transactions,
         ...recalculateAnalytics(
@@ -267,8 +413,17 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
           state.categories
         )
       };
-    }),
-  deleteTransaction: (id) =>
+    });
+
+    return transaction;
+  },
+  deleteTransaction: async (id) => {
+    const { accessToken, logout } = resolveAuthContext();
+    await apiClient(`/transactions/${id}`, { method: 'DELETE' }, {
+      token: accessToken,
+      onUnauthorized: logout
+    });
+
     set((state) => {
       const transactions = state.transactions.filter((transaction) => transaction.id !== id);
       return {
@@ -282,12 +437,13 @@ export const useDashboardStore = create<DashboardState & DashboardActions>((set,
           state.categories
         )
       };
-    }),
-  applyPreset: (presetId) => {
+    });
+  },
+  applyPreset: async (presetId) => {
     const state = get();
     const preset = state.presets.find((item) => item.id === presetId);
     if (!preset) return undefined;
-    const transaction = state.createTransaction({
+    const transaction = await state.createTransaction({
       type: preset.type,
       categoryId: preset.categoryId,
       category: state.categories.find((category) => category.id === preset.categoryId)?.name,

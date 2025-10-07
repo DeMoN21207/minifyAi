@@ -3,6 +3,7 @@ import { PrismaService } from '../common/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as argon2 from 'argon2';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -14,10 +15,11 @@ export class AuthService {
       data: {
         email: payload.email,
         passwordHash,
-        fullName: payload.fullName
+        fullName: payload.fullName,
+        role: payload.role ?? UserRole.USER
       }
     });
-    return { id: user.id, email: user.email, fullName: user.fullName };
+    return { id: user.id, email: user.email, fullName: user.fullName, role: user.role };
   }
 
   async login(payload: LoginDto) {
@@ -33,7 +35,13 @@ export class AuthService {
     }
     return {
       accessToken: 'mock-access-token',
-      refreshToken: 'mock-refresh-token'
+      refreshToken: 'mock-refresh-token',
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      }
     };
   }
 

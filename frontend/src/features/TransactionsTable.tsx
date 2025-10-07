@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowRight, Tag, Trash2 } from 'lucide-react';
 import { useDashboardStore } from '@store/dashboardStore';
 import { formatDate } from '@utils/format';
@@ -13,6 +14,32 @@ export const TransactionsTable = () => {
       selectedCurrency: state.selectedCurrency
     }));
 
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCategoryChange = async (transactionId: string, value: string) => {
+    setError(null);
+    try {
+      await updateTransaction(transactionId, { categoryId: value });
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Не удалось обновить категорию';
+      setError(message);
+    }
+  };
+
+  const handleDelete = async (transactionId: string) => {
+    setPendingId(transactionId);
+    setError(null);
+    try {
+      await deleteTransaction(transactionId);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Не удалось удалить операцию';
+      setError(message);
+    } finally {
+      setPendingId(null);
+    }
+  };
+
   return (
     <section className="glass-panel flex flex-col overflow-hidden p-6">
       <header className="flex items-center justify-between">
@@ -24,6 +51,7 @@ export const TransactionsTable = () => {
           Смотреть все
         </button>
       </header>
+      {error && <div className="mt-3 rounded-2xl bg-red-100 px-4 py-3 text-sm text-red-600">{error}</div>}
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full divide-y divide-white/40 text-sm">
           <thead className="text-left text-xs uppercase tracking-widest text-slate-400">
@@ -45,11 +73,9 @@ export const TransactionsTable = () => {
                 <td className="py-3 pr-4 text-slate-500">
                   <select
                     value={transaction.categoryId}
-                    onChange={(event) =>
-                      updateTransaction(transaction.id, {
-                        categoryId: event.target.value
-                      })
-                    }
+                    onChange={(event) => {
+                      void handleCategoryChange(transaction.id, event.target.value);
+                    }}
                     className="rounded-full bg-white/60 px-3 py-1 text-xs text-slate-600 focus:outline-none"
                   >
                     {categories.map((category) => (
@@ -79,8 +105,9 @@ export const TransactionsTable = () => {
                     ))}
                     <button
                       type="button"
-                      onClick={() => deleteTransaction(transaction.id)}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-1 text-[11px] text-slate-400 shadow hover:text-red-500"
+                      onClick={() => void handleDelete(transaction.id)}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-1 text-[11px] text-slate-400 shadow hover:text-red-500 disabled:opacity-60"
+                      disabled={pendingId === transaction.id}
                     >
                       <Trash2 size={12} />
                     </button>

@@ -1,4 +1,13 @@
-export type CurrencyCode = 'RUB' | 'USD' | 'EUR';
+export type CurrencyCode = 'RUB' | 'USD' | 'EUR' | 'GBP' | 'CNY';
+
+export type UserRole = 'user' | 'admin';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: UserRole;
+}
 
 export interface MoneyAmount {
   currency: CurrencyCode;
